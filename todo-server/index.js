@@ -72,6 +72,7 @@ async function run() {
             }).send({ success: true })
         })
 
+        // post user in db
         app.post('/users', async (req, res) => {
 
             const userInfo = req.body;
@@ -82,6 +83,7 @@ async function run() {
             res.send(result);
         })
 
+        // post task in db
         app.post('/tasks', verifyToken, async (req, res) => {
             // console.log(verifyToken)
             const newTask = req.body;
@@ -89,11 +91,26 @@ async function run() {
             res.send(result)
         })
 
-        app.get('/tasks', verifyToken, async (req, res) => {
-            const tasksData = await taskCollection.find().toArray()
-            res.send(tasksData);
+        // get all tasks from db
+        app.get('/tasks/:email', verifyToken, async (req, res) => {
+            const decodedEmail = req.user?.email
+            const email = req.params.email
+            if (decodedEmail !== email) {
+                return res.status(403).send({ message: "Unauthorized access" })
+            }
+            try {
+                const query = { email: email }
+                const tasksData = await taskCollection.find(query).toArray()
+                res.send(tasksData);
+
+            } catch (error) {
+                console.log(error)
+                res.status(500).send({ message: "Server error" });
+            }
         })
 
+
+        // delete task from db
         app.delete('/tasks/:id', verifyToken, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
@@ -101,7 +118,18 @@ async function run() {
             res.send(result);
         })
 
-
+        // update a task collection
+        app.put('/tasks/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const updateTask = req.body;
+            const query = { _id: new ObjectId(id) };
+            const updateData = {
+                $set: updateTask,
+                $currentDate: { lastModified: true }
+            }
+            const result = await taskCollection.updateOne(query, updateData);
+            res.send(result);
+        })
 
 
 
