@@ -38,9 +38,9 @@ const verifyToken = (req, res, next) => {
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
         if (err) return res.status(403).send({ message: "Unauthorized access" })
         req.user = decoded
+        next()
     })
 
-    next()
 }
 
 async function run() {
@@ -92,6 +92,13 @@ async function run() {
         app.get('/tasks', verifyToken, async (req, res) => {
             const tasksData = await taskCollection.find().toArray()
             res.send(tasksData);
+        })
+
+        app.delete('/tasks/:id', verifyToken, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await taskCollection.deleteOne(query)
+            res.send(result);
         })
 
 
