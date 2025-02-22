@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken')
 const cookieParser = require('cookie-parser')
 
 const corsOption = {
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:5175', 'https://task-management-applicat-4ece4.web.app'],
     credentials: true,
     optionalSuccessStatus: 200,
 }
@@ -34,12 +34,13 @@ const client = new MongoClient(uri, {
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies?.token
+    console.log(token)
     if (!token) return res.status(401).send({ message: "Unauthorized access" })
     jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
         if (err) return res.status(403).send({ message: "Unauthorized access" })
         req.user = decoded
-        next()
     })
+    next()
 
 }
 
@@ -55,7 +56,7 @@ async function run() {
             const email = req.body
             // create token
             const token = jwt.sign(email, process.env.SECRET_KEY, { expiresIn: '365d' })
-            // console.log(token)
+            console.log(token)
             res.cookie('token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV == 'production',
@@ -74,10 +75,16 @@ async function run() {
 
         // post user in db
         app.post('/users', async (req, res) => {
+            // console.log(req.body)
             const userInfo = req.body;
-            const query = { email: userInfo?.email }
+            const { email } = req.body;
+            const query = { email }
+            console.log(query)
             const existingUser = await userCollection.findOne(query)
-            if (existingUser) return res.send({ message: "User already exists", insertedId: null })
+            if (existingUser) {
+                return res.send({ message: "User already exists", insertedId: null })
+                // return res.send({ message: "User already exists", insertedId: existingUser._id })
+            }
             const result = await userCollection.insertOne(userInfo);
             res.send(result);
         })
