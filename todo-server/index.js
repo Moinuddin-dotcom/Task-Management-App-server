@@ -74,11 +74,10 @@ async function run() {
 
         // post user in db
         app.post('/users', async (req, res) => {
-
             const userInfo = req.body;
-            // const query = { email: user?.email }
-            // const existingUser = await userCollection.findOne(query)
-            // if (existingUser) return res.send({ message: "User already exists", insertedId: null })
+            const query = { email: userInfo?.email }
+            const existingUser = await userCollection.findOne(query)
+            if (existingUser) return res.send({ message: "User already exists", insertedId: null })
             const result = await userCollection.insertOne(userInfo);
             res.send(result);
         })
@@ -91,7 +90,7 @@ async function run() {
             res.send(result)
         })
 
-        // get all tasks from db
+        // get all tasks from db by email
         app.get('/tasks/:email', verifyToken, async (req, res) => {
             const decodedEmail = req.user?.email
             const email = req.params.email
@@ -136,8 +135,8 @@ async function run() {
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
